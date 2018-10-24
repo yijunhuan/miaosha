@@ -18,6 +18,7 @@ public class HelloController {
     RedisService redisService;
     
     @RequestMapping("/testhello")
+    @ResponseBody
     public String sayHello(Map<String,String> info) {
         info.put("info", "springBoot");
         return "hello";
