@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta http-equiv="Content-Type" charset="UTF-8" content="text/html" />
+<title>商品详情</title>
+<!--引入jquery文件  -->
+<script type="text/javascript" src="../js/jquery.js"></script>
+<!--引入bootstrap  -->
+<link rel="stylesheet" type="text/css"
+	href="../bootstrap/css/bootstrap.min.css" />
+<script type="text/javascript" src="../bootstrap/js/bootstrap.min.js"></script>
+<!-- jquery-validator -->
+<script type="text/javascript"
+	src="../jquery-validation/jquery.validate.min.js"></script>
+<script type="text/javascript"
+	src="../jquery-validation/localization/messages_zh.min.js"></script>
+<!-- layer -->
+<script type="text/javascript" src="../layer/layer.js"></script>
+<!-- md5.js -->
+<script type="text/javascript" src="../js/md5.min.js"></script>
+<!-- common.js -->
+<script type="text/javascript" src="../js/common.js"></script>
+
+</head>
+
+<body>
+	<div class="container">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h4>秒杀商品详情</h4>
+			</div>
+
+			<div class="panel-body">
+				<table class="table table-responsive" id="goodslist">
+					<tr>
+						<td>商品名称</td>
+						<td colspan="3" id="goodName"></td>
+					</tr>
+					<tr>
+						<td>商品图片</td>
+						<td colspan="3"><img id="goodsImg" width="200" height="200" /></td>
+					</tr>
+					<tr>
+						<td>秒杀开始时间</td>
+						<td id="startTime"></td>
+						<td><input type="hidden" id="remainSeconds" /> <span
+							id="miaoshaTip"></span></td>
+						<td>
+							<button class="btn btn-primary btn-block" onclick="doMiaosha()"
+								id="buyButton">立即秒杀</button> <input type="hidden" name="goodsId"
+							id="goodsId" />
+
+						</td>
+					</tr>
+					<tr>
+						<td>商品原价</td>
+						<td colspan="3" id="goodsPrice"></td>
+					</tr>
+					<tr>
+						<td>秒杀价</td>
+						<td colspan="3" id="miaoshaPrice"></td>
+					</tr>
+					<tr>
+						<td>库存数量</td>
+						<td colspan="3" id="stockCount"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(function() {
+			getdetail();
+		});
+
+		function getdetail() {
+			var goodsId = g_getQueryString("goodsId");
+			//发送ajax请求
+			$.ajax({
+				type : "get",
+				url : "/goods/to_detail/" + goodsId,
+				success : function(result) {
+					if (result.data.user == null) {
+						window.location.href = "/index.html";
+					}
+
+					if (result.code == 0) {
+						resolveDataLoaderPage(result.data.goodsVo);
+					} else {
+						alert(result.msg);
+					}
+				}
+			});
+		}
+
+		//解析并加载页面
+		function resolveDataLoaderPage(result) {
+			$("#goodName").text(result.goodName);
+			$("#goodsImg").attr("src", result.goodsImg);
+			$("#goodsPrice").text(result.goodsPrice);
+			$("#miaoshaPrice").text(result.miaoshaPrice);
+			$("#stockCount").text(result.stockCount);
+			$("#goodsId").val(result.id);
+		}
+
+		//秒杀
+		function doMiaosha() {
+			$.ajax({
+				type : "POST",
+				url : "/miaosha/do_miaosha",
+				data : {
+					goodsId : $("#goodsId").val()
+				},
+				success : function(data) {
+					if(data.code==0){
+						window.location.href="/htm/order_detail.htm";
+					}else if(data.code==500501){
+						alert(data.msg)
+					}
+				},
+				error : function(data) {
+					alert(data.msg);
+				}
+			});
+		}
+
+		function countDown() {
+			var remainSeconds = $("#remainSeconds").val();
+			var timeout;
+			if (remainSeconds > 0) { //秒杀还没开始，倒计时
+				$("#buyButton").attr("disabled", true);
+				timeout = setTimeout(function() {
+					$("#countDown").text(remainSeconds - 1);
+					$("#remainSeconds").val(remainSeconds - 1);
+					countDown();
+				}, 1000);
+			} else if (remainSeconds == 0) { //秒杀进行中
+				$("#buyButton").attr("disabled", false);
+				if (timeout) {
+					clearTimeout(timeout);
+				}
+				$("#miaoshaTip").html("秒杀进行中");
+			} else { //秒杀已经结束
+				$("#buyButton").attr("disabled", true);
+				$("#miaoshaTip").html("秒杀已经结束");
+			}
+
+		};
+	</script>
+
+</body>
+
+</html>
